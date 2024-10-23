@@ -15,8 +15,6 @@ import {
 import {
   ActivityIcon,
   AlertCircleIcon,
-  DownloadIcon,
-  RocketIcon,
   ShieldIcon,
   SunIcon,
   ThermometerIcon,
@@ -25,6 +23,8 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons'
 import LocationGraph from '@/components/location-graph'
+import { CircularGraph } from '@/components/circular-graph'
+import { TempratureGraph } from '@/components/temp-graph'
 
 export default function Dashboard() {
   const [devices, setDevices] = useState([])
@@ -35,6 +35,7 @@ export default function Dashboard() {
     temperature: 25,
   })
   const [motionSensorDataLogs, setMotionSensorDataLogs] = useState([])
+  const [tempratureSensorDataLogs, setTempratureSensorDataLogs] = useState([])
   const [alerts, setAlerts] = useState([])
   const [isSimulating, setIsSimulating] = useState(true)
 
@@ -69,6 +70,11 @@ export default function Dashboard() {
       setMotionSensorDataLogs((prevLogs) => [
         ...prevLogs,
         randomMotion, // Append the current sensorData
+      ])
+
+      setTempratureSensorDataLogs((prevTempLogs) => [
+        ...prevTempLogs,
+        { temp: randomTemperature }, // Append the current sensorData
       ])
     }
 
@@ -228,8 +234,8 @@ export default function Dashboard() {
               <LocationGraph />
             )}
 
-            <LocationGraph graphData={{}} />
-            <LocationGraph graphData={{}} />
+            <CircularGraph value={sensorData.light} />
+            <TempratureGraph temp={tempratureSensorDataLogs} />
           </div>
 
           {/* Alerts Section */}
