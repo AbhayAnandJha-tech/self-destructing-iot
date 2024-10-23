@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
+import { Progress } from '@/components/ui/progress'
 import {
   AlertCircle,
   Activity,
@@ -11,6 +12,8 @@ import {
   Thermometer,
   Shield,
   Download,
+  Lock,
+  Unlock,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -29,10 +32,11 @@ import {
   where,
   onSnapshot,
   getDocs,
+  addDoc,
 } from 'firebase/firestore'
-import { ref, getDownloadURL } from 'firebase/storage'
+import { ref, getDownloadURL, uploadString } from 'firebase/storage'
 
-const Dashboard = () => {
+export default function Component() {
   const [devices, setDevices] = useState([])
   const [selectedDevice, setSelectedDevice] = useState(null)
   const [sensorData, setSensorData] = useState({
@@ -45,13 +49,14 @@ const Dashboard = () => {
   const [isSimulating, setIsSimulating] = useState(true)
   const [isConnected, setIsConnected] = useState(false)
   const [socket, setSocket] = useState(null)
+  const [securityLevel, setSecurityLevel] = useState(100)
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'devices'), (snapshot) => {
-      const deviceList = []
-      snapshot.forEach((doc) => {
-        deviceList.push({ id: doc.id, ...doc.data() })
-      })
+      const deviceList = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }))
       setDevices(deviceList)
     })
 
@@ -66,10 +71,10 @@ const Dashboard = () => {
       )
 
       const unsubscribe = onSnapshot(q, (snapshot) => {
-        const alertList = []
-        snapshot.forEach((doc) => {
-          alertList.push({ id: doc.id, ...doc.data() })
-        })
+        const alertList = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
         setAlerts(alertList)
       })
 
@@ -83,7 +88,9 @@ const Dashboard = () => {
   }, [selectedDevice])
 
   const initializeWebSocket = (deviceId) => {
-    const ws = new WebSocket(`ws://localhost:5000?device_id=${deviceId}`)
+    const ws = new WebSocket(
+      `ws://localhost:5000/socket.io/?EIO=4&transport=websocket&device_id=${deviceId}`
+    )
     setSocket(ws)
 
     ws.onopen = () => {
@@ -94,7 +101,7 @@ const Dashboard = () => {
     }
 
     ws.onmessage = (event) => {
-      const { type, data } = JSON.parse(event.data)
+      const { type, data } = event.data
 
       if (type === 'sensorUpdate' && isSimulating) {
         setSensorData(data)
@@ -104,6 +111,8 @@ const Dashboard = () => {
         ])
       } else if (type === 'tamperAlert') {
         handleTamperAlert(data)
+      } else if (type === 'securityUpdate') {
+        setSecurityLevel(data.level)
       }
     }
 
@@ -134,10 +143,26 @@ const Dashboard = () => {
     })
 
     try {
-      const url = await getDownloadURL(ref(storage, alert.final_data_ref))
-      const response = await fetch(url)
-      const finalData = await response.json()
-      console.log('Retrieved final data:', finalData)
+      const finalData = {
+        ...sensorData,
+        timestamp: new Date().toISOString(),
+        device_id: selectedDevice.id,
+      }
+
+      const finalDataRef = ref(
+        storage,
+        `final_data/${selectedDevice.id}_${Date.now()}.json`
+      )
+      await uploadString(finalDataRef, JSON.stringify(finalData), 'raw', {
+        contentType: 'application/json',
+      })
+
+      const alertDoc = {
+        ...alert,
+        final_data_ref: finalDataRef.fullPath,
+      }
+
+      await addDoc(collection(db, 'alerts'), alertDoc)
 
       setDevices((prev) =>
         prev.map((device) =>
@@ -147,7 +172,7 @@ const Dashboard = () => {
         )
       )
     } catch (error) {
-      console.error('Error retrieving final data:', error)
+      console.error('Error storing final data:', error)
     }
   }
 
@@ -172,9 +197,24 @@ const Dashboard = () => {
     }
   }
 
+  const simulateTamper = () => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(
+        JSON.stringify({
+          type: 'simulateTamper',
+          device_id: selectedDevice.id,
+        })
+      )
+    } else {
+      toast('Simulation Error', {
+        description: 'WebSocket connection is not open',
+        variant: 'destructive',
+      })
+    }
+  }
+
   return (
     <div className="p-6 space-y-6">
-      {/* Rest of the JSX remains the same */}
       {/* Device Selection */}
       <Card>
         <CardHeader>
@@ -226,6 +266,29 @@ const Dashboard = () => {
               />
             </div>
           </div>
+
+          {/* Security Level */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Shield className="mr-2" /> Security Level
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center space-x-2">
+                <Progress value={securityLevel} className="w-full" />
+                <span className="font-bold">{securityLevel}%</span>
+              </div>
+              <div className="mt-2 flex justify-between text-sm text-gray-500">
+                <span className="flex items-center">
+                  <Unlock className="w-4 h-4 mr-1" /> Vulnerable
+                </span>
+                <span className="flex items-center">
+                  <Lock className="w-4 h-4 mr-1" /> Secure
+                </span>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Sensor Data Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -351,16 +414,7 @@ const Dashboard = () => {
               <CardContent>
                 <Button
                   variant="destructive"
-                  onClick={() => {
-                    fetch('http://localhost:5000/api/simulation/trigger', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        device_id: selectedDevice.id,
-                        type: 'tamper',
-                      }),
-                    })
-                  }}
+                  onClick={simulateTamper}
                   className="w-full"
                 >
                   Simulate Tamper Detection
@@ -373,5 +427,3 @@ const Dashboard = () => {
     </div>
   )
 }
-
-export default Dashboard

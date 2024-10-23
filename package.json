@@ -16,6 +16,7 @@
     "@radix-ui/react-toast": "^1.2.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "firebase": "^11.0.1",
     "lucide-react": "^0.453.0",
     "next": "14.2.16",
@@ -23,6 +24,7 @@
     "react": "^18",
     "react-dom": "^18",
     "recharts": "^2.13.0",
+    "socket.io-client": "^4.8.0",
     "sonner": "^1.5.0",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7"
