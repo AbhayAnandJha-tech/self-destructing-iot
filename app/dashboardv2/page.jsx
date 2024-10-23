@@ -13,14 +13,18 @@ import {
   where,
 } from 'firebase/firestore'
 import {
+  ActivityIcon,
   AlertCircleIcon,
   DownloadIcon,
   RocketIcon,
   ShieldIcon,
+  SunIcon,
+  ThermometerIcon,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons'
+import LocationGraph from '@/components/location-graph'
 
 export default function Dashboard() {
   const [devices, setDevices] = useState([])
@@ -30,6 +34,7 @@ export default function Dashboard() {
     light: 500,
     temperature: 25,
   })
+  const [motionSensorDataLogs, setMotionSensorDataLogs] = useState([])
   const [alerts, setAlerts] = useState([])
   const [isSimulating, setIsSimulating] = useState(true)
 
@@ -43,6 +48,36 @@ export default function Dashboard() {
     const docRef = await addDoc(collection(db, 'alerts'), newAlertObject)
     return docRef.id
   }
+
+  useEffect(() => {
+    // Function to generate random values for sensor data
+    const generateRandomSensorData = () => {
+      const randomMotion = {
+        x: (Math.random() * 2 - 1).toFixed(2), // Random value between -1 and 1
+        y: (Math.random() * 2 - 1).toFixed(2),
+        z: (Math.random() * 2 - 1).toFixed(2),
+      }
+      const randomLight = Math.floor(Math.random() * 1000) // Random light intensity between 0 and 1000
+      const randomTemperature = (Math.random() * 30 + 10).toFixed(2) // Random temperature between 10°C and 40°C
+
+      setSensorData({
+        motion: randomMotion,
+        light: randomLight,
+        temperature: randomTemperature,
+      })
+
+      setMotionSensorDataLogs((prevLogs) => [
+        ...prevLogs,
+        randomMotion, // Append the current sensorData
+      ])
+    }
+
+    // Set an interval to update sensor data every second (1000ms)
+    const interval = setInterval(generateRandomSensorData, 1000)
+
+    // Cleanup the interval when the component unmounts
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'devices'), (snapshot) => {
@@ -144,6 +179,59 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* Sensor Data Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <ActivityIcon className="mr-2" /> Motion
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div>X: {sensorData.motion.x}</div>
+                  <div>Y: {sensorData.motion.y}</div>
+                  <div>Z: {sensorData.motion.z}</div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <SunIcon className="mr-2" /> Light Level
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{sensorData.light} lux</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <ThermometerIcon className="mr-2" /> Temperature
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {sensorData.temperature}°C
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {motionSensorDataLogs ? (
+              <LocationGraph graphData={motionSensorDataLogs} />
+            ) : (
+              <LocationGraph />
+            )}
+
+            <LocationGraph graphData={{}} />
+            <LocationGraph graphData={{}} />
+          </div>
+
           {/* Alerts Section */}
           <Card>
             <CardHeader>
@@ -159,7 +247,7 @@ export default function Dashboard() {
                     alert.device_id == selectedDevice.id && (
                       <Alert key={alert.id} variant="destructive">
                         <ExclamationTriangleIcon className="h-4 w-4" />
-                        <AlertTitle>
+                        <AlertTitle className="font-semibold">
                           Alert! -{' '}
                           {alert.type.charAt(0).toUpperCase() +
                             alert.type.slice(1)}{' '}
