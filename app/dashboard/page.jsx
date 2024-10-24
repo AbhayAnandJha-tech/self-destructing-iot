@@ -49,6 +49,24 @@ export default function Dashboard() {
     return docRef.id;
   }
 
+  function handleDeviceSelection(device) {
+    setSelectedDevice(device);
+
+    console.log(device);
+
+    fetch("http://localhost:5000/register_device", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        device_id: device.device_id,
+      }),
+    });
+
+    fetch("http://localhost:5000/track_hash/prototype.txt");
+  }
+
   useEffect(() => {
     const generateRandomSensorData = () => {
       const randomMotion = {
@@ -88,26 +106,46 @@ export default function Dashboard() {
     return () => unsubscribe();
   }, []);
 
+  // useEffect(() => {
+  //   if (selectedDevice) {
+  //     const tenSecondsAgo = Date.now() - 30 * 1000;
+
+  //     const q = query(
+  //       collection(db, "alerts"),
+  //       where("timestamp", ">=", tenSecondsAgo)
+  //     );
+
+  //     const unsubscribe = onSnapshot(q, (snapshot) => {
+  //       const alertList = snapshot.docs.map((doc) => ({
+  //         id: doc.id,
+  //         ...doc.data(),
+  //       }));
+  //       setAlerts(alertList);
+  //     });
+
+  //     return () => unsubscribe();
+  //   }
+  // }, [selectedDevice]);
+
   useEffect(() => {
-    if (selectedDevice) {
-      const tenSecondsAgo = Date.now() - 30 * 1000;
-
-      const q = query(
-        collection(db, "alerts"),
-        where("timestamp", ">=", tenSecondsAgo)
-      );
-
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const alertList = snapshot.docs.map((doc) => ({
+    // Firestore snapshot listener for alerts
+    const unsubscribe = onSnapshot(
+      collection(db, "alerts"),
+      (snapshot) => {
+        const alertsList = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
-        setAlerts(alertList);
-      });
+        setAlerts(alertsList); // Update alerts state with the latest data
+      },
+      (error) => {
+        console.error("Error fetching alerts:", error); // Error handling
+      }
+    );
 
-      return () => unsubscribe();
-    }
-  }, [selectedDevice]);
+    // Cleanup function to unsubscribe from the listener
+    return () => unsubscribe();
+  }, []);
 
   function generateUUID() {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
@@ -145,7 +183,11 @@ export default function Dashboard() {
           <CardTitle>Device Selection</CardTitle>
 
           {/* Register Device Button */}
-          <Button variant="outline" onClick={handleRegisterDevice}>
+          <Button
+            variant="outline"
+            onClick={handleRegisterDevice}
+            disabled={devices}
+          >
             Register Device
           </Button>
         </CardHeader>
@@ -160,7 +202,7 @@ export default function Dashboard() {
                 className={`w-full ${
                   device.status === "destroyed" ? "opacity-50" : ""
                 }`}
-                onClick={() => setSelectedDevice(device)}
+                onClick={() => handleDeviceSelection(device)}
                 disabled={device.status === "destroyed"}
               >
                 {device.id.substring(0, 8)}
@@ -248,8 +290,8 @@ export default function Dashboard() {
               <div className="space-y-4">
                 {alerts.map(
                   (alert) =>
-                    alert &&
-                    alert.device_id === selectedDevice.id && (
+                    alert && (
+                      // alert.device_id === selectedDevice.id &&
                       <Alert key={alert.id} variant="destructive">
                         <ExclamationTriangleIcon className="h-4 w-4" />
                         <AlertTitle className="font-semibold">

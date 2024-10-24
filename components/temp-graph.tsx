@@ -72,8 +72,8 @@ export function TempratureGraph({ temp }: TempratureGraphProps) {
               dataKey="temp"
               tickLine={false}
               axisLine={false}
-              tickMargin={13}
-              tickFormatter={(value) => value.slice(0, 13)}
+              tickMargin={13 * 6}
+              tickFormatter={(value) => value.slice(0, 13 * 6)}
             />
             <ChartTooltip
               cursor={false}

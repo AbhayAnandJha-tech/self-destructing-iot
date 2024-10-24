@@ -80,7 +80,7 @@ const locationGraph: FC<LocationGraphProps> = ({ graphData = sampleData }) => {
               dataKey="timestamp"
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
+              tickMargin={8 * 6}
               // tickFormatter={(value) => value.slice(0, 3)}
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
