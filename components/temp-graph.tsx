@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import { TrendingUp } from 'lucide-react'
-import { CartesianGrid, Line, LineChart, XAxis } from 'recharts'
+import { TrendingUp } from "lucide-react";
+import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
 
 import {
   Card,
@@ -10,47 +10,49 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
+} from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from '@/components/ui/chart'
+} from "@/components/ui/chart";
 
-export const description = 'A line chart with dots'
+export const description = "A line chart with dots";
 
 const chartData = [
-  { month: 'January', desktop: 186, mobile: 80 },
-  { month: 'February', desktop: 305, mobile: 200 },
-  { month: 'March', desktop: 237, mobile: 120 },
-  { month: 'April', desktop: 73, mobile: 190 },
-  { month: 'May', desktop: 209, mobile: 130 },
-  { month: 'June', desktop: 214, mobile: 140 },
-]
+  { month: "January", desktop: 186, mobile: 80 },
+  { month: "February", desktop: 305, mobile: 200 },
+  { month: "March", desktop: 237, mobile: 120 },
+  { month: "April", desktop: 73, mobile: 190 },
+  { month: "May", desktop: 209, mobile: 130 },
+  { month: "June", desktop: 214, mobile: 140 },
+];
 
 const chartConfig = {
   desktop: {
-    label: 'Desktop',
-    color: 'hsl(var(--chart-1))',
+    label: "Desktop",
+    color: "hsl(var(--chart-1))",
   },
   mobile: {
-    label: 'Mobile',
-    color: 'hsl(var(--chart-2))',
+    label: "Mobile",
+    color: "hsl(var(--chart-2))",
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
 interface TempratureGraphProps {
-  temp: Array<{ temp: number }>
+  temp: Array<{ temp: number }>;
 }
 export function TempratureGraph({ temp }: TempratureGraphProps) {
+  const mydata =
+    temp.length > 13 ? temp.slice(temp.length - 13, temp.length - 1) : temp;
   return (
     <Card>
       <CardHeader>
         <CardTitle>Line Chart - Dots</CardTitle>
         <CardDescription>
           <div className="flex items-center gap-2 font-medium leading-none">
-            graphic visualization of motion sensor data{' '}
+            graphic visualization of motion sensor data{" "}
             <TrendingUp className="h-4 w-4" />
           </div>
         </CardDescription>
@@ -59,7 +61,7 @@ export function TempratureGraph({ temp }: TempratureGraphProps) {
         <ChartContainer config={chartConfig}>
           <LineChart
             accessibilityLayer
-            data={temp}
+            data={mydata}
             margin={{
               left: 12,
               right: 12,
@@ -70,8 +72,8 @@ export function TempratureGraph({ temp }: TempratureGraphProps) {
               dataKey="temp"
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
-              tickFormatter={(value) => value.slice(0, 3)}
+              tickMargin={13}
+              tickFormatter={(value) => value.slice(0, 13)}
             />
             <ChartTooltip
               cursor={false}
@@ -83,7 +85,7 @@ export function TempratureGraph({ temp }: TempratureGraphProps) {
               stroke="var(--color-desktop)"
               strokeWidth={2}
               dot={{
-                fill: 'var(--color-desktop)',
+                fill: "var(--color-desktop)",
               }}
               activeDot={{
                 r: 6,
@@ -101,5 +103,5 @@ export function TempratureGraph({ temp }: TempratureGraphProps) {
         </div>
       </CardFooter> */}
     </Card>
-  )
+  );
 }
