@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import { FC } from 'react'
-import { TrendingUp } from 'lucide-react'
-import { CartesianGrid, Line, LineChart } from 'recharts'
+import { FC } from "react";
+import { TrendingUp } from "lucide-react";
+import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
 
 import {
   Card,
@@ -10,30 +10,30 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
+} from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from '@/components/ui/chart'
+} from "@/components/ui/chart";
 
-export const description = 'A multiple line chart'
+export const description = "A multiple line chart";
 
 const chartConfig = {
   desktop: {
-    label: 'Desktop',
-    color: 'hsl(var(--chart-1))',
+    label: "Desktop",
+    color: "hsl(var(--chart-1))",
   },
   mobile: {
-    label: 'Mobile',
-    color: 'hsl(var(--chart-2))',
+    label: "Mobile",
+    color: "hsl(var(--chart-2))",
   },
   test: {
-    label: 'Mobile',
-    color: 'hsl(var(--chart-3))',
+    label: "Mobile",
+    color: "hsl(var(--chart-3))",
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
 // Sample data for sensor motion over time
 const sampleData = [
@@ -43,20 +43,24 @@ const sampleData = [
   { x: 0.3, y: 1.2, z: 0.5 },
   { x: 0.8, y: 1.1, z: 0.7 },
   { x: 0.5, y: 1.0, z: 0.4 },
-]
+];
 
 interface LocationGraphProps {
-  graphData: Array<{ x: number; y: number; z: number }>
+  graphData: Array<{ x: number; y: number; z: number }>;
 }
 
 const locationGraph: FC<LocationGraphProps> = ({ graphData = sampleData }) => {
+  const formattedGraphData =
+    graphData.length > 8
+      ? graphData.slice(graphData.length - 8, graphData.length - 1)
+      : graphData;
   return (
     <Card>
       <CardHeader>
         <CardTitle>Line Chart - Multiple</CardTitle>
         <CardDescription>
           <div className="flex items-center gap-2 font-medium leading-none">
-            graphic visualization of motion sensor data{' '}
+            graphic visualization of motion sensor data{" "}
             <TrendingUp className="h-4 w-4" />
           </div>
         </CardDescription>
@@ -65,20 +69,20 @@ const locationGraph: FC<LocationGraphProps> = ({ graphData = sampleData }) => {
         <ChartContainer config={chartConfig}>
           <LineChart
             accessibilityLayer
-            data={graphData}
+            data={formattedGraphData}
             margin={{
               left: 12,
               right: 12,
             }}
           >
             <CartesianGrid vertical={false} />
-            {/* <XAxis
+            <XAxis
               dataKey="timestamp"
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value) => value.slice(0, 3)}
-            /> */}
+              // tickFormatter={(value) => value.slice(0, 3)}
+            />
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
             <Line
               dataKey="x"
@@ -115,7 +119,7 @@ const locationGraph: FC<LocationGraphProps> = ({ graphData = sampleData }) => {
         </div>
       </CardFooter> */}
     </Card>
-  )
-}
+  );
+};
 
-export default locationGraph
+export default locationGraph;

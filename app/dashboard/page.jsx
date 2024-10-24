@@ -109,6 +109,17 @@ export default function Dashboard() {
     }
   }, [selectedDevice]);
 
+  function generateUUID() {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+      /[xy]/g,
+      function (c) {
+        const r = (Math.random() * 16) | 0;
+        const v = c === "x" ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      }
+    );
+  }
+
   const simulateTamper = () => {
     toast("Test Tamper", {
       description: "N/A",
@@ -117,11 +128,26 @@ export default function Dashboard() {
     createNewAlert("tamper", selectedDevice.id);
   };
 
+  const handleRegisterDevice = async () => {
+    const newDeviceObject = {
+      device_id: generateUUID(),
+      registration_time: Date.now(),
+      status: "active",
+    };
+    const docRef = await addDoc(collection(db, "devices"), newDeviceObject);
+    return docRef.id;
+  };
+
   return (
     <div className="p-6 space-y-6">
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row justify-between">
           <CardTitle>Device Selection</CardTitle>
+
+          {/* Register Device Button */}
+          <Button variant="outline" onClick={handleRegisterDevice}>
+            Register Device
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
