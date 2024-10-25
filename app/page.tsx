@@ -112,7 +112,7 @@ export default function Dashboard() {
             Self-Destructing Device Control Center
           </h1>
           <p className="text-xl text-blue-300">Secure. Monitor. Protect.</p>
-          <p className="text-lg text-blue-400 mt-2">
+          <p className="text-lg text-blue-400 mt-2 drop-shadow-lg">
             {currentTime.toLocaleString("en-US", {
               weekday: "long",
               year: "numeric",
